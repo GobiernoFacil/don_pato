@@ -1,7 +1,7 @@
 // API de don pato
 
 var APP = function(){
-  var endpoint   = "http://representantes.pati.to/",
+  var endpoint   = "http://elecciones.rob.mx/",
       search     = "busqueda/geo/diputados/",
       candidates = "candidatoas/",
       locations  = "casilla/",
@@ -33,7 +33,7 @@ var APP = function(){
       connection.send();
     },
     success : function(){
-      console.log("success", this, connection.responseText);
+      console.log("success", this, JSON.parse(connection.responseText));
     },
     error : function(){
       console.log("error", this, connection.responseText);
