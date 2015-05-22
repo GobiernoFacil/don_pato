@@ -1,0 +1,24 @@
+{
+  "name": "donpato",
+  "version": "1.0.0",
+  "authors": [
+    "el coruco <el.coruco@gmail.com>"
+  ],
+  "description": "conexión al api de don pato que está vergavergas",
+  "main": "main.js",
+  "keywords": [
+    "Puebla"
+  ],
+  "license": "MIT",
+  "homepage": "http://gobiernofacil.com",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "d3": "~3.5.5"
+  }
+}
