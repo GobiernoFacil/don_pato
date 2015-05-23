@@ -1,47 +1,64 @@
 // API de don pato
-
 var APP = function(){
-  var endpoint   = "http://representantes.pati.to/",
-      search     = "busqueda/geo/diputados/",
+  var endpoint   = "http://candidatos.rob.mx/",
+      search     = "http://representantes.pati.to/busqueda/geo/diputados/",
       candidates = "candidatoas/",
       locations  = "casilla/",
-      connection = new XMLHttpRequest(),
       app;
 
   app = {
     get : function(method, params){
-      var url = endpoint;
+      var url, connection = new XMLHttpRequest();
       switch(method){
         case "search":
-          url += search + params[0] + "/" + params[1];
+          url = search + params[0] + "/" + params[1];
           break;
 
         case "candidate":
-          url += candidates + params[0];
+          url = endpoint + candidates + params[0];
           break;
 
         case "location":
-          url += locations + params[0];
+          url = endpoint + locations + params[0];
           break;
 
         default:
           return null;
           break;
       }
-
       connection.open("GET", url, true);
+      connection.onload  = app.success;
+      connection.onerror = app.error;
       connection.send();
     },
     success : function(){
-      console.log("success", this, connection.responseText);
+      app.data.push(JSON.parse(this.responseText));
     },
-    error : function(){
-      console.log("error", this, connection.responseText);
+    error : function(conn){
+      console.log("error", this, conn.responseText);
+    },
+    postcodes : [],
+    cities : [],
+    data : [],
+    print_codes : function(el, index, array){
+      app.get("search", [el.lat, el.lng]);
     }
   };
 
-  connection.onload  = app.success;
-  connection.onerror = app.error;
-
   return app;
-}
+};
+
+// inicia el API
+app = new APP();
+
+// obtiene los municipios
+d3.csv("/js/data/puebla_municipios.csv", null,function(error, rows){
+  app.cities = rows;
+});
+// obtiene los códigos postales
+d3.csv("/js/data/texmelucan_codigos.csv", null,function(error, rows){
+  app.postcodes = rows;
+  app.postcodes.forEach(app.print_codes);
+});
+
+// print data for each city
