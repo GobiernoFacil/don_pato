@@ -4,7 +4,53 @@
   <title>API de don pato</title>
 </head>
 <body>
-<h1>API de don pato</h1>
+<!-- Inica la conlaboración con don pato. -->
+<div id="main">
+  <h1>API de don pato</h1>
+
+  <!-- [ el selector de distrito ]  -->
+  <!-- Esta información se carga de un para de CSVs -->
+  <section id="district-selector-container">
+    <form>
+      <p>
+        <label>Selecciona tu estado:</label>
+        <select name="state"></select>
+      </p>
+      <p>
+        <label>Selecciona tu municipio:</label>
+        <select name="state"></select>
+      </p>
+    </form>
+  </section>
+
+
+
+
+
+
+  <!-- el mapa del distrito -->
+  <section id="district-map-container"></section>
+
+  <!-- los candidatos a mantenidos del distrito -->
+  <section id="district-candidates-container"></section>
+
+  <!-- la información del distrito -->
+  <section id="district-data-container"></section>
+
+  <!-- la información de las ciudades del distrito -->
+  <section id="cities-data-container"></section>
+
+  <!-- la sección de la radiografía electoral del distrito -->
+  <section id="election-data-container"></section>
+
+  <!-- el mapa de las casillas -->
+  <section id="city-map-container"></section>
+
+  <!-- la información de la casilla seleccionada -->
+  <section id="locations-map-container"></section>
+
+</div>
+
 <script src="js/bower_components/d3/d3.min.js"></script>
 <script src="js/main.js"></script>
 </body>
