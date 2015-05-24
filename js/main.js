@@ -12,10 +12,12 @@ var APP = function(){
 
   // [ CACHE THE UI ELEMENTS ]
       state_selector = document.querySelector("#district-selector-container select[name='state']"),
+      city_selector  = document.querySelector("#district-selector-container select[name='city']"),
   
   // [ SET THE DATA CONTAINERS ]
       states_array = [],
       cities_array = [],
+      cities_map_array = [],
       app;
 
   //
@@ -64,6 +66,7 @@ var APP = function(){
     // [ FILL THE STATE SELECTOR ]
     //
     set_states : function(states){
+      states.unshift({clave_entidad : 0, nombre:"selecciona un estado", url : ""});
       states.forEach(function(value, index, array){
         var option = document.createElement('option');
         var text   = document.createTextNode(value.nombre);
@@ -82,19 +85,90 @@ var APP = function(){
         states_array = rows;
         that.set_states(rows);
       });
-    }
+    },
 
     //
     // [ FILL THE CITY SELECTOR ]
     //
-    set_cities : function(cities){
-      
+    set_cities : function(e){
+      var state_id = typeof e === "object" ? e.currentTarget.value : e;
+      var cities = app.get_cities_by_state(state_id);
+      cities.unshift({clave_entidad : 0, clave_municipio:0, nombre : "selecciona un municipio"});
+      city_selector.innerHTML = "";
+      cities.forEach(function(value, index, array){
+        var option = document.createElement('option');
+        var text   = document.createTextNode(value.nombre);
+        option.appendChild(text);
+        option.setAttribute("value", value.clave_entidad);
+        city_selector.appendChild(option);
+      });
+    },
+
+    //
+    // [ LOAD THE CITY LIST ]
+    //
+    get_cities : function(){
+      var that = this;
+      d3.csv(cities_csv, null, function(error, rows){
+        cities_array = rows;
+        that.map_cities(rows);
+      });
+    },
+
+    //
+    // [ MAP THE CITY ]
+    //
+    map_cities : function(cities){
+      var map  = [], 
+      counter  = 0, 
+      pointer  = 1,
+      displace = 0;
+// 2 [0, 2], 3[2], 4, 1, 2
+      cities.forEach(function(value, index, array){
+        if(pointer == value.clave_entidad){
+          counter++;
+        }
+        else{
+          map.push([displace, counter]);
+          counter  = 1;
+          displace = index;
+          pointer  = value.clave_entidad;
+        }
+
+        if(array.length == index + 1){
+          map.push([displace, counter]);
+        }
+      });
+
+      cities_array     = cities;
+      cities_map_array = map;
+      app.set_cities("0");
+    },
+
+    //
+    // [ GET CITIES BY STATE ]
+    //
+    get_cities_by_state : function(state_id){
+      console.log(state_id);
+      if(! +state_id) return [];
+
+      var x  = cities_map_array[+state_id - 1];
+      console.log(x);
+      var cities = cities_array.slice(x[0], x[0] + x[1]);
+      return cities;
+    },
+
+    get_cities_array : function(){
+      return cities_array;
+    },
+
+    get_cities_map : function(){
+      return cities_map_array;
     }
   };
 
-  //
-  // [ WIRE THE APP ] 
-  //
+  // [ RIG THE UI ]
+  state_selector.onchange = app.set_cities;
 
   return app;
 };
@@ -104,9 +178,10 @@ var APP = function(){
 // inicia el API
 app = new APP();
 
-// obtiene los municipios
-/*
-d3.csv("/js/data/puebla_municipios.csv", null,function(error, rows){
-  app.cities = rows;
-});
-*/
+app.get_states();
+app.get_cities();
+
+
+
+
+
