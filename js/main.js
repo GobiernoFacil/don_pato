@@ -18,6 +18,7 @@ var APP = function(){
       locations  = "casillas/",
       states_csv = "/js/data/estados_min.csv",
       cities_csv = "/js/data/municipios.csv",
+      districts_csv = "/js/data/distritos.csv",
       district_map_center = [19.2676, -98.4239],
 
   // [ CACHE THE UI ELEMENTS ]
@@ -28,7 +29,9 @@ var APP = function(){
   // [ SET THE DATA CONTAINERS ]
       states_array = [],
       cities_array = [],
+      districts_array = [],
       cities_map_array = [],
+      districts_map_array = [],
       google_district_map = null,
       app;
 
@@ -84,7 +87,6 @@ var APP = function(){
       else{
         console.log("sepa qué pasó");
       }
-      // app.data.push(JSON.parse(this.responseText));
     },
 
     // [ FUCK! ]
@@ -176,6 +178,70 @@ var APP = function(){
       var x  = cities_map_array[+state_id - 1],
       cities = cities_array.slice(x[0], x[0] + x[1]);
       return cities;
+    },
+
+    //
+    // [ T H E   D I S T R I C T   D A T A ]
+    // ---------------------------------------------
+    //
+
+    // [ LOAD THE DISTRICT LIST ]
+    get_districts : function(){
+      var that = this;
+      d3.csv(districts_csv, null, function(error, rows){
+        districts_array = rows;
+        that.map_districts(rows);
+      });
+    },
+
+    // [ MAP THE CITY ]
+    map_districts : function(districts){
+      var map          = [],
+      state            = [],
+      district         = [],
+      state_pointer    = 0,
+      district_pointer = 0;
+
+      districts.forEach(function(value, index, array){ 
+        // [A] STATES
+        if(!state_pointer || state_pointer != value.clave_entidad){
+          if(state_pointer) map.push(state);
+          if(!state_pointer) district.push(value);
+          state = [];
+          state_pointer    = value.clave_entidad;
+          district_pointer = value.distrito;
+        }
+        // [B]
+        else{
+          // [B.A] DISTRICTS 
+          if(district_pointer != value.distrito){
+            state.push(district);
+            district = [];
+            district_pointer = value.distrito;
+            district.push(value);
+          }
+          // [B.B]
+          else{
+            district.push(value);
+          } // [B.B]
+
+          if(array.length === index+1 || array[index+1].clave_entidad != state_pointer){
+            state.push(district);
+            district = [];
+            district_pointer = value.distrito;
+            district.push(value);
+          }
+        } // [B]
+        if(array.length === index+1) map.push(state);
+      }); // forEach
+      
+      districts_map_array = map;
+
+      return map;
+    },
+
+    get_districts_array : function(){
+      return districts_map_array;
     },
 
     //
