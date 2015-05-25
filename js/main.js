@@ -42,51 +42,63 @@ var APP = function(){
   app = {
 
     //
+    // [ G E O L O C A L I Z E   T H E   S T U F F ]
+    // ---------------------------------------------
+    //
+    get_geolocation : function(){
+      navigator.geolocation.getCurrentPosition(this.success_geolocation);
+    },
+
+    success_geolocation : function(loc){
+      app.get("search", [loc.coords.latitude, loc.coords.longitude]);
+    },
+
+    error_geolocation : function(){
+      console.log("meh murió la geolocalización");
+    },
+    //
     // [ C A L L   T H E   "Don Pato"   A P I ]
     // ----------------------------------------
     //
 
     // [ MAKE THE CALL]
     get : function(method, params){
-      var url, connection = new XMLHttpRequest();
+      var url, success_function;
       switch(method){
         case "search":
           url = search + params[0] + "/" + params[1];
+          success_function = this.search_success;
           break;
 
         case "candidate":
           url = endpoint + candidates + params[0] + ".json";
+          success_function = this.candidate_success;
           break;
 
         case "location":
           url = endpoint + locations + params[0];
+          success_function = this.location_success;
           break;
 
         default:
           return null;
           break;
       }
-      connection.open("GET", url, true);
-      connection.onload  = app.success;
-      connection.onerror = app.error;
-      connection.send();
+      success_function = success_function.bind(this, params);
+      d3.json(url, success_function);
     },
 
     // [ DON-PATO-API-CALL-SUCCESS ]
-    success : function(){
-      var data = JSON.parse(this.responseText);
-      if(Array.isArray(data) && data[0].mentiras){
-        console.log("es candidate");
-      }
-      else if(Array.isArray(data) && data[0].nombre){
-        console.log("es location");
-      }
-      else if(data.distrito){
-        console.log("es search");
-      }
-      else{
-        console.log("sepa qué pasó");
-      }
+    search_success : function(params, error, data){
+      console.log(error, data, params);
+    },
+
+    candidate_success : function(params, error, data){
+      console.log(error, data, params);
+    },
+
+    location_success : function(params, error, data){
+      console.log(error, data, params);
     },
 
     // [ FUCK! ]
@@ -238,10 +250,6 @@ var APP = function(){
       districts_map_array = map;
 
       return map;
-    },
-
-    get_districts_array : function(){
-      return districts_map_array;
     },
 
     //
