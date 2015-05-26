@@ -394,6 +394,7 @@ var APP = function(){
         location_container.appendChild(c);
 
         cities_array = app.get_cities_by_district(current_state, current_district);
+        console.log("iras estos datos:", current_state, current_district, cities_array);
         address = loc + ", " + cities_array[3].innerHTML + ", " 
                   + states_array[+current_state].nombre + ", México";
         app.get_geolocation_from_google(address);
