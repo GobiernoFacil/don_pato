@@ -16,8 +16,8 @@ var APP = function(){
       search     = "http://representantes.pati.to/busqueda/geo/diputados/",
       candidates = "candidatoas/",
       locations  = "casillas/",
-      states_csv = "/js/data/estados_min.csv",
-      cities_csv = "/js/data/municipios.csv",
+      states_csv    = "/js/data/estados_min.csv",
+      cities_csv    = "/js/data/municipios.csv",
       districts_csv = "/js/data/distritos.csv",
       district_key_regex  = /df-(\d+)-(\d)/,
       location_regex      = /(\d+)-([a-z\d]+)/i,
@@ -27,7 +27,7 @@ var APP = function(){
       state_selector      = document.querySelector("#district-selector-container select[name='state']"),
       city_selector       = document.querySelector("#district-selector-container select[name='city']"),
       district_map        = document.querySelector("#district-map-container .map"),
-      candidate_container = document.querySelector("#district-candidates-container ul");
+      candidate_container = document.querySelector("#district-candidates-container ul"),
   
   // [ SET THE DATA CONTAINERS ]
       states_array        = [],
@@ -36,6 +36,7 @@ var APP = function(){
       cities_map_array    = [],
       districts_map_array = [],
       google_district_map  = null,
+      google_location_map  = null,
       district_key         = null,
       current_location     = null,
       current_location_key = null,
@@ -124,6 +125,7 @@ var APP = function(){
 
     candidate_success : function(params, error, data){
       console.log(error, data, params);
+      this.set_candidate(data);
     },
 
     location_success : function(params, error, data){
@@ -323,16 +325,38 @@ var APP = function(){
 
     //
     // [ T H E   C A N D I D A T E S   F U N C T I O N S ]
-    // ---------------------------------------------
+    // ---------------------------------------------------
     //
     set_candidate : function(candidates){
       candidate_container.innerHTML = "";
+      var create = document.createElement.bind(document),
+          txt    = document.createTextNode.bind(document);
 
       candidates.forEach(function(val, index, array){
-        var li = document.createElement("li"),
-            img = document.createElement("img"),
-            house,
-            house_text,
+        // [0]. crea el contenedor
+        var li = create("li");
+        // [1]. agrega la imagen
+        var img     = create("img"),
+            img_el  = create("p");
+            img.src = val.foto;
+            img_el.appendChild(img);
+            li.appendChild(img_el);
+        // [2]. agrega el nombre
+        var name     = create("p"),
+            name_src = txt(val.nombre);
+            name.appendChild(name_src); 
+            li.appendChild(name);
+        // [3]. agrega la casa de campaña
+        var house = create("p"),
+            house_src = txt(val.casa_campana ? val.casa_campana : "indigente/no sabe/no contestó");
+            house.appendChild(house_src);
+            li.appendChild(house);
+        // [4]. agrega el partido
+        var parties = create("p");
+            parties_src = val.partidos.join(",");
+            parties.innerHTML = parties_src;
+            li.appendChild(parties);
+            /*
             age,
             age_text,
             curruculum_work,
@@ -348,8 +372,27 @@ var APP = function(){
             social_c,
             social_d,
             alternate,
-            phone,
+            phone;
+            */
+        candidate_container.appendChild(li);
       });
+    },
+
+    _make_candidate : function(items){
+      var create = document.createElement.bind(document),
+          txt    = document.createTextNode.bind(document),
+          li     = create("li"),
+          el, content;
+
+      items.forEach(function(item, index, array){
+        if(item.val){
+          el = create(item.el);
+          if(val.el == "img"){
+
+          }
+        }
+      });
+      return li;
     }
   };
 
