@@ -19,20 +19,30 @@ var APP = function(){
       states_csv = "/js/data/estados_min.csv",
       cities_csv = "/js/data/municipios.csv",
       districts_csv = "/js/data/distritos.csv",
-      district_map_center = [19.2676, -98.4239],
+      district_key_regex  = /df-(\d+)-(\d)/,
+      location_regex      = /(\d+)-([a-z\d]+)/i,
+      district_map_center = [19.2676, -98.4239], // san merlín!
 
   // [ CACHE THE UI ELEMENTS ]
       state_selector = document.querySelector("#district-selector-container select[name='state']"),
       city_selector  = document.querySelector("#district-selector-container select[name='city']"),
       district_map   = document.querySelector("#district-map-container .map"),
+      candidate_container = document.querySelector("#district-candidates-container ul");
   
   // [ SET THE DATA CONTAINERS ]
-      states_array = [],
-      cities_array = [],
-      districts_array = [],
-      cities_map_array = [],
+      states_array        = [],
+      cities_array        = [],
+      districts_array     = [],
+      cities_map_array    = [],
       districts_map_array = [],
-      google_district_map = null,
+      google_district_map  = null,
+      district_key         = null,
+      current_location     = null,
+      current_location_key = null,
+      current_polygon      = null,
+      current_state        = null,
+      current_city         = null,
+      current_district     = null,
       app;
 
   //
@@ -55,6 +65,9 @@ var APP = function(){
 
     error_geolocation : function(){
       console.log("meh murió la geolocalización");
+    },
+
+    _get_state_and_district : function(district_key){
     },
     //
     // [ C A L L   T H E   "Don Pato"   A P I ]
@@ -90,7 +103,22 @@ var APP = function(){
 
     // [ DON-PATO-API-CALL-SUCCESS ]
     search_success : function(params, error, data){
-      console.log(error, data, params);
+      district_map_center  = params;
+      district_key         = data.distrito;
+      current_location     = data.seccion.id;
+      current_polygon      = data.seccion.coords.coordinates[0];
+      current_state        = district_key_regex.exec(district_key)[1];
+      current_district     = district_key_regex.exec(district_key)[2];
+      current_location_key = location_regex.exec(current_location)[2];
+    
+      if(! google_district_map){
+        this.initialize_district_map();
+      }
+      else{
+        google_district_map.setCenter({lat: district_map_center[0], lng: district_map_center[1]});
+      }
+
+      this.get("candidate", [district_key]);
     },
 
     candidate_success : function(params, error, data){
