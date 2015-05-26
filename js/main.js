@@ -24,9 +24,9 @@ var APP = function(){
       district_map_center = [19.2676, -98.4239], // san merlín!
 
   // [ CACHE THE UI ELEMENTS ]
-      state_selector = document.querySelector("#district-selector-container select[name='state']"),
-      city_selector  = document.querySelector("#district-selector-container select[name='city']"),
-      district_map   = document.querySelector("#district-map-container .map"),
+      state_selector      = document.querySelector("#district-selector-container select[name='state']"),
+      city_selector       = document.querySelector("#district-selector-container select[name='city']"),
+      district_map        = document.querySelector("#district-map-container .map"),
       candidate_container = document.querySelector("#district-candidates-container ul");
   
   // [ SET THE DATA CONTAINERS ]
@@ -69,6 +69,7 @@ var APP = function(){
 
     _get_state_and_district : function(district_key){
     },
+    
     //
     // [ C A L L   T H E   "Don Pato"   A P I ]
     // ----------------------------------------
@@ -318,6 +319,37 @@ var APP = function(){
     // [ GET THE DISTRICT MAP CENTER ]
     get_district_map_center : function(){
       return district_map_center;
+    },
+
+    //
+    // [ T H E   C A N D I D A T E S   F U N C T I O N S ]
+    // ---------------------------------------------
+    //
+    set_candidate : function(candidates){
+      candidate_container.innerHTML = "";
+
+      candidates.forEach(function(val, index, array){
+        var li = document.createElement("li"),
+            img = document.createElement("img"),
+            house,
+            house_text,
+            age,
+            age_text,
+            curruculum_work,
+            curruculum_work_text,
+            curricullum_template,
+            curriculum_template_text,
+            name,
+            name_text,
+            parties,
+            sex,
+            social_a,
+            social_b,
+            social_c,
+            social_d,
+            alternate,
+            phone,
+      });
     }
   };
 
@@ -326,7 +358,7 @@ var APP = function(){
   // -----------------------
   //
   state_selector.onchange = app.set_cities;
-  city_selector.onchange = app.set_district_map_center;
+  city_selector.onchange  = app.set_district_map_center;
 
   //
   // [ R E T U R N   T H E   A P P ]
