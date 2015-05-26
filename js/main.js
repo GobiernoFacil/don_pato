@@ -27,7 +27,9 @@ var APP = function(){
       state_selector      = document.querySelector("#district-selector-container select[name='state']"),
       city_selector       = document.querySelector("#district-selector-container select[name='city']"),
       district_map        = document.querySelector("#district-map-container .map"),
+      locations_map       = document.querySelector("#district-city-container .map"),
       candidate_container = document.querySelector("#district-candidates-container ul"),
+      location_container  = document.querySelector("#locations-map-container"),
   
   // [ SET THE DATA CONTAINERS ]
       states_array        = [],
@@ -37,6 +39,7 @@ var APP = function(){
       districts_map_array = [],
       google_district_map  = null,
       google_location_map  = null,
+      google_geocoder      = new google.maps.Geocoder(),
       district_key         = null,
       current_location     = null,
       current_location_key = null,
@@ -66,9 +69,6 @@ var APP = function(){
 
     error_geolocation : function(){
       console.log("meh murió la geolocalización");
-    },
-
-    _get_state_and_district : function(district_key){
     },
     
     //
@@ -103,7 +103,7 @@ var APP = function(){
       d3.json(url, success_function);
     },
 
-    // [ DON-PATO-API-CALL-SUCCESS ]
+    // [ DON-PATO-API-CALL-SUCCESS (SEARCH) ]
     search_success : function(params, error, data){
       district_map_center  = params;
       district_key         = data.distrito;
@@ -112,6 +112,9 @@ var APP = function(){
       current_state        = district_key_regex.exec(district_key)[1];
       current_district     = district_key_regex.exec(district_key)[2];
       current_location_key = location_regex.exec(current_location)[2];
+
+      state_selector.value = current_state;
+      this.set_cities(current_state);
     
       if(! google_district_map){
         this.initialize_district_map();
@@ -121,15 +124,19 @@ var APP = function(){
       }
 
       this.get("candidate", [district_key]);
+      this.get("location", [current_location]);
     },
 
+    // [ DON-PATO-API-CALL-SUCCESS (CANDIDATE) ]
     candidate_success : function(params, error, data){
       console.log(error, data, params);
       this.set_candidate(data);
     },
 
+    // [ DON-PATO-API-CALL-SUCCESS (LOCATION) ]
     location_success : function(params, error, data){
       console.log(error, data, params);
+      this.set_location_data(data);
     },
 
     // [ FUCK! ]
@@ -283,6 +290,28 @@ var APP = function(){
       return map;
     },
 
+    get_cities_by_district : function(state, district){
+      var cities_array = districts_map_array[+state - 1][+district - 1],
+          current_city = null,
+          city_list    = [],
+          loc          = parseInt(current_location_key);
+
+      for(var i = 0; i < cities_array.length; i++){
+        if(loc >= +cities_array[i].inicia && loc <= +cities_array[i].termina){
+          current_city = cities_array[i].clave_municipio;
+        }
+        if(city_list.indexOf(cities_array[i].clave_municipio) == -1){
+          city_list.push(cities_array[i].clave_municipio);
+        }
+      }
+      return [
+        current_city, 
+        city_list, 
+        loc, 
+        city_selector.querySelector("option[value='" + (current_city - 1) + "']")
+      ];
+    },
+
     //
     // [ T H E   G O O G L E   D I S T R I C T   M A P ]
     // -------------------------------------------------
@@ -322,6 +351,55 @@ var APP = function(){
     get_district_map_center : function(){
       return district_map_center;
     },
+
+    //
+    // [ T H E   G O O G L E   L O C A T I O N S   M A P ]
+    // ---------------------------------------------------
+    //
+
+    initialize_locations_map : function(){
+      var mapOptions = {
+        center : {
+          lat : 0,
+          lng : 0
+        },
+        zoom : 12
+      };
+      google_location_map = new google.maps.Map(locations_map, mapOptions);
+    },
+
+    get_geolocation_from_google : function(location){
+      google_geocoder.geocode({address : location}, function(results, status){
+        console.log(results, status);
+      });
+    },
+
+    //
+    // [ T H E   G O O D   G U Y S ]
+    // ---------------------------------------------------
+    //
+    set_location_data : function(locations){
+      var container = document.createElement("div"),
+          address, c, html, loc;
+
+      locations.forEach(function(val, index, array){
+        c    = container.cloneNode(),
+        html = "";
+        loc = val.nombre + ", " + val.direccion.calle + " " + val.direccion.numero;
+        html +="<h3>" + loc + "</h3>";
+        val.funcionarios.forEach(function(v,i,a){
+          html += "<p>" + v.nombre + " " + v.apellidos + " (" + v.cargo + ")</p>";
+        });
+        c.innerHTML = html;
+        location_container.appendChild(c);
+
+        cities_array = app.get_cities_by_district(current_state, current_district);
+        address = loc + ", " + cities_array[3].innerHTML + ", " 
+                  + states_array[+current_state].nombre + ", México";
+        app.get_geolocation_from_google(address);
+      });
+    },
+
 
     //
     // [ T H E   C A N D I D A T E S   F U N C T I O N S ]
@@ -376,23 +454,6 @@ var APP = function(){
             */
         candidate_container.appendChild(li);
       });
-    },
-
-    _make_candidate : function(items){
-      var create = document.createElement.bind(document),
-          txt    = document.createTextNode.bind(document),
-          li     = create("li"),
-          el, content;
-
-      items.forEach(function(item, index, array){
-        if(item.val){
-          el = create(item.el);
-          if(val.el == "img"){
-
-          }
-        }
-      });
-      return li;
     }
   };
 
@@ -417,6 +478,7 @@ app = new APP();
 
 app.get_states();
 app.get_cities();
+app.get_districts();
 
 
 
