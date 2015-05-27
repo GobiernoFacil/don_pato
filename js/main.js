@@ -12,6 +12,9 @@ var APP = function(){
   //
 
   // [ SET DEFAULT VALUES ]
+  // define los endpoints, la ruta para los CSV de estados, municipios y distritos.
+  // También el punto de default para los mapas y las expresiones regulares que 
+  // limpian las claves que regresa el api de don pato.
   var endpoint   = "http://elecciones.rob.mx/",
       search     = "http://representantes.pati.to/busqueda/geo/diputados/",
       candidates = "candidatoas/",
@@ -24,6 +27,7 @@ var APP = function(){
       district_map_center = [19.2676, -98.4239], // san merlín!
 
   // [ CACHE THE UI ELEMENTS ]
+  // crea una referencia a los elementos de UI.
       state_selector      = document.querySelector("#district-selector-container select[name='state']"),
       city_selector       = document.querySelector("#district-selector-container select[name='city']"),
       district_map        = document.querySelector("#district-map-container .map"),
@@ -32,6 +36,8 @@ var APP = function(){
       location_container  = document.querySelector("#locations-map-container"),
   
   // [ SET THE DATA CONTAINERS ]
+  // crea las variables que contendrán la información de los CSV, y de los objetos 
+  // que se crean dinámicamente. También los apuntadores de ubicación actuales.
       states_array        = [],
       cities_array        = [],
       districts_array     = [],
@@ -59,15 +65,24 @@ var APP = function(){
     // [ G E O L O C A L I Z E   T H E   S T U F F ]
     // ---------------------------------------------
     //
+
+    // [ GET LOCATION ]
     get_geolocation : function(){
+      // obtiene la ubicación mediante el API de geolocalización HTML5
       navigator.geolocation.getCurrentPosition(this.success_geolocation);
     },
 
+    // [ GET LOCATION SUCCESS ]
     success_geolocation : function(loc){
+      // en caso de que se consiga la ubicación, llama al api de don pato,
+      // y obtiene el distrito, la casilla, y 
+      // el polígono del distrito.
       app.get("search", [loc.coords.latitude, loc.coords.longitude]);
     },
 
+    // [ GET LOCATION FAILS ]
     error_geolocation : function(){
+      // si el usuario no permite que lo geolocalicen, pues vale gorro.
       console.log("meh murió la geolocalización");
     },
     
@@ -78,7 +93,17 @@ var APP = function(){
 
     // [ MAKE THE CALL]
     get : function(method, params){
+      // para conectarse al api de don Pato, utiliza d3. Se reciben dos 
+      // variables:
+      // * method : decide el endpoint al cual debe conectarse (search, candidate, location)
+      // * params : es un array con las variables para el api de don pato. puede contener
+      //            latitud y logintud o la clave del distrito o la clave de la casilla.
       var url, success_function;
+      // dependiendo del método, es el endopoint que se genera, y la función que se 
+      // debe ejecutar al recibir los datos del api. Las posibles funciones son:
+      // * search_success
+      // * candidate_success
+      // * location_success
       switch(method){
         case "search":
           url = search + params[0] + "/" + params[1];
@@ -99,6 +124,8 @@ var APP = function(){
           return null;
           break;
       }
+      // se le agrega a la función de success el array de params, y se 
+      // corrige el scope de la función.
       success_function = success_function.bind(this, params);
       d3.json(url, success_function);
     },
