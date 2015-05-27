@@ -21,8 +21,8 @@ var APP = function(){
       locations  = "casillas/",
       states_csv    = "/js/data/estados_min.csv",
       cities_csv    = "/js/data/municipios.csv",
-      districts_csv = "/js/data/distritos.csv",
-      district_key_regex  = /df-(\d+)-(\d)/,
+      districts_csv = "/js/data/distritos2.csv",
+      district_key_regex  = /df-(\d+)-(\d+)/,
       location_regex      = /(\d+)-([a-z\d]+)/i,
       district_map_center = [19.2676, -98.4239], // san merlín!
 
@@ -156,13 +156,11 @@ var APP = function(){
 
     // [ DON-PATO-API-CALL-SUCCESS (CANDIDATE) ]
     candidate_success : function(params, error, data){
-      console.log(error, data, params);
       this.set_candidate(data);
     },
 
     // [ DON-PATO-API-CALL-SUCCESS (LOCATION) ]
     location_success : function(params, error, data){
-      console.log(error, data, params);
       this.set_location_data(data);
     },
 
@@ -318,24 +316,24 @@ var APP = function(){
     },
 
     get_cities_by_district : function(state, district){
-      var cities_array = districts_map_array[+state - 1][+district - 1],
-          current_city = null,
-          city_list    = [],
-          loc          = parseInt(current_location_key);
+      var _cities_array = districts_map_array[+state - 1][+district - 1],
+          _city_list    = [],
+          _loc          = parseInt(current_location_key);
 
-      for(var i = 0; i < cities_array.length; i++){
-        if(loc >= +cities_array[i].inicia && loc <= +cities_array[i].termina){
-          current_city = cities_array[i].clave_municipio;
+      for(var i = 0; i < _cities_array.length; i++){
+        console.log(_loc, _cities_array[i].inicia, _cities_array[i].termina, _cities_array[i].clave_entidad, _cities_array[i].clave_municipio, _cities_array[i].clave_municipio_inegi);
+        if(_loc >= +_cities_array[i].inicia && _loc <= +_cities_array[i].termina){
+          current_city = _cities_array[i].clave_municipio_inegi;
         }
-        if(city_list.indexOf(cities_array[i].clave_municipio) == -1){
-          city_list.push(cities_array[i].clave_municipio);
+        if(_city_list.indexOf(_cities_array[i].clave_municipio_inegi) == -1){
+          _city_list.push(_cities_array[i].clave_municipio_inegi);
         }
       }
       return [
         current_city, 
-        city_list, 
-        loc, 
-        city_selector.querySelector("option[value='" + (current_city - 1) + "']")
+        _city_list, 
+        _loc, 
+        city_selector.querySelector("option[value='" + (current_city) + "']")
       ];
     },
 
@@ -482,6 +480,26 @@ var APP = function(){
             */
         candidate_container.appendChild(li);
       });
+    },
+
+    get_setup_data : function(){
+      return {
+      states_array : states_array,
+      cities_array : cities_array,
+      districts_array : districts_array,
+      cities_map_array : cities_map_array,
+      districts_map_array : districts_map_array,
+      google_district_map : google_district_map,
+      google_location_map : google_location_map,
+      google_geocoder : google_geocoder,
+      district_key : district_key,
+      current_location : current_location,
+      current_location_key : current_location_key,
+      current_polygon : current_polygon,
+      current_state : current_state,
+      current_city : current_city,
+      current_district : current_district,
+      };
     }
   };
 
