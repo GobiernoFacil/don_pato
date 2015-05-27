@@ -18,7 +18,7 @@ var APP = function(){
       locations  = "casillas/",
       states_csv    = "/js/data/estados_min.csv",
       cities_csv    = "/js/data/municipios.csv",
-      districts_csv = "/js/data/distritos.csv",
+      districts_csv = "/js/data/distritos2.csv",
       district_key_regex  = /df-(\d+)-(\d)/,
       location_regex      = /(\d+)-([a-z\d]+)/i,
       district_map_center = [19.2676, -98.4239], // san merlín!
@@ -129,13 +129,11 @@ var APP = function(){
 
     // [ DON-PATO-API-CALL-SUCCESS (CANDIDATE) ]
     candidate_success : function(params, error, data){
-      console.log(error, data, params);
       this.set_candidate(data);
     },
 
     // [ DON-PATO-API-CALL-SUCCESS (LOCATION) ]
     location_success : function(params, error, data){
-      console.log(error, data, params);
       this.set_location_data(data);
     },
 
@@ -298,7 +296,7 @@ var APP = function(){
 
       for(var i = 0; i < cities_array.length; i++){
         if(loc >= +cities_array[i].inicia && loc <= +cities_array[i].termina){
-          current_city = cities_array[i].clave_municipio;
+          current_city = cities_array[i].clave_municipio_inegi;
         }
         if(city_list.indexOf(cities_array[i].clave_municipio) == -1){
           city_list.push(cities_array[i].clave_municipio);
@@ -308,7 +306,7 @@ var APP = function(){
         current_city, 
         city_list, 
         loc, 
-        city_selector.querySelector("option[value='" + (current_city - 1) + "']")
+        city_selector.querySelector("option[value='" + current_city + "']")
       ];
     },
 
@@ -394,7 +392,6 @@ var APP = function(){
         location_container.appendChild(c);
 
         cities_array = app.get_cities_by_district(current_state, current_district);
-        console.log("iras estos datos:", current_state, current_district, cities_array);
         address = loc + ", " + cities_array[3].innerHTML + ", " 
                   + states_array[+current_state].nombre + ", México";
         app.get_geolocation_from_google(address);
