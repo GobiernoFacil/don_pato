@@ -414,27 +414,38 @@ var APP = function(){
       candidates.forEach(function(val, index, array){
         // [0]. crea el contenedor
         var li = create("li");
+        	li.setAttribute("class","col-xs-4 col-sm-3");
+        	div = create("div");
+        	li.appendChild(div);
         // [1]. agrega la imagen
-        var img     = create("img"),
-            img_el  = create("p");
-            img.src = val.foto;
+        var img     	= create("img"),
+            img_el  	= create("figure");
+            img.src 	= val.foto;
             img_el.appendChild(img);
-            li.appendChild(img_el);
+            div.appendChild(img_el);
         // [2]. agrega el nombre
-        var name     = create("p"),
+        var name     = create("h2"),
             name_src = txt(val.nombre);
             name.appendChild(name_src); 
-            li.appendChild(name);
-        // [3]. agrega la casa de campaña
+            div.appendChild(name);
+        // [3]. agrega el partido
+        var parties = create("p");
+            parties_src = val.partidos.join(" + ");
+            parties.innerHTML = parties_src;
+            parties.setAttribute("class",'partidin ' + val.partidos.join(" "));
+            div.appendChild(parties);
+      /*
+         // [4]. agrega edad
+        var age = create("p"),
+            age_src = txt(val.edad ? val.edad + " años" : "¿inmortal?/no sabe/no contestó");
+            age.appendChild(age_src);
+            div.appendChild(age);
+            
+        // [5]. agrega la casa de campaña
         var house = create("p"),
             house_src = txt(val.casa_campana ? val.casa_campana : "indigente/no sabe/no contestó");
             house.appendChild(house_src);
-            li.appendChild(house);
-        // [4]. agrega el partido
-        var parties = create("p");
-            parties_src = val.partidos.join(",");
-            parties.innerHTML = parties_src;
-            li.appendChild(parties);
+            div.appendChild(house);*/
             /*
             age,
             age_text,
