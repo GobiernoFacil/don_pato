@@ -447,6 +447,11 @@ var APP = function(){
             img_el  	= create("figure");
             img.src 	= val.foto;
             img_el.appendChild(img);
+            //link
+			link_diputa 	= create("a"),
+			link_diputa_txt = "+ información";
+			link_diputa.innerHTML = link_diputa_txt;
+			img_el.appendChild(link_diputa);
             div.appendChild(img_el);
         // [2]. agrega el nombre
         var name     = create("h2"),
