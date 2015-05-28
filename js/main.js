@@ -41,6 +41,7 @@ var APP = function(){
       states_array        = [],
       cities_array        = [],
       districts_array     = [],
+      candidates_array    = [],
       cities_map_array    = [],
       districts_map_array = [],
       google_district_map  = null,
@@ -53,6 +54,9 @@ var APP = function(){
       current_state        = null,
       current_city         = null,
       current_district     = null,
+  // [ SET THE HANDLEBARS TEMPLATES ]
+      candidate_source   = document.querySelector("#template-candidate").innerHTML,
+      candidate_template = Handlebars.compile(candidate_source),
       app;
 
   //
@@ -67,12 +71,16 @@ var APP = function(){
     //
 
     // [ GET LOCATION ]
+    // ----------------
+    //
     get_geolocation : function(){
       // obtiene la ubicación mediante el API de geolocalización HTML5
       navigator.geolocation.getCurrentPosition(this.success_geolocation);
     },
 
     // [ GET LOCATION SUCCESS ]
+    // ------------------------
+    //
     success_geolocation : function(loc){
       // en caso de que se consiga la ubicación, llama al api de don pato,
       // y obtiene el distrito, la casilla, y 
@@ -81,6 +89,8 @@ var APP = function(){
     },
 
     // [ GET LOCATION FAILS ]
+    // ----------------------
+    //
     error_geolocation : function(){
       // si el usuario no permite que lo geolocalicen, pues vale gorro.
       console.log("meh murió la geolocalización");
@@ -92,6 +102,8 @@ var APP = function(){
     //
 
     // [ MAKE THE CALL]
+    // ----------------
+    //
     get : function(method, params){
       // para conectarse al api de don Pato, utiliza d3. Se reciben dos 
       // variables:
@@ -127,46 +139,90 @@ var APP = function(){
       // se le agrega a la función de success el array de params, y se 
       // corrige el scope de la función.
       success_function = success_function.bind(this, params);
+      // se hace la llamada al api de don pato.  
       d3.json(url, success_function);
     },
 
     // [ DON-PATO-API-CALL-SUCCESS (SEARCH) ]
+    // -------------------------------------
+    //
     search_success : function(params, error, data){
+      // si el api de don pato o algo más falla, 
+      // se ejecuta la función de error (definda abajo),
+      // y sale del script y no pasa nada
+      if(error){
+        this.error(error);
+        return false;
+      }
+      // en caso de que sí funcione, con la información recibida
+      // de enviar las coordenadas actuales, se capturan los siguientes 
+      // valores:
+      // [1] las coordenadas capturadas por mediante geolocalización o
+      //      mediante el selector de municipios
       district_map_center  = params;
+      // [2] la clave del distrito, ej. df-21-12
       district_key         = data.distrito;
+      // [3] la clave de la sección más cercana, ej. 21-1245
       current_location     = data.seccion.id;
+      // [4] las coordenadas del polígono del distrito
       current_polygon      = data.seccion.coords.coordinates[0];
+      // [5] la clave del estado
       current_state        = district_key_regex.exec(district_key)[1];
+      // [6] la clave del distrito
       current_district     = district_key_regex.exec(district_key)[2];
+      // [7] la clave de la sección electoral
       current_location_key = location_regex.exec(current_location)[2];
 
+      // Se actualiza el selector de estado, y se actualiza el selector de
+      // ciudades. 
       state_selector.value = current_state;
       this.set_cities(current_state);
-    
+
+      // se inicia el mapa de distrito, en caso de que no se haya iniciado ya.
       if(! google_district_map){
         this.initialize_district_map();
       }
+      // si el mapa ya tiene datos, se actualiza el mapa
       else{
         google_district_map.setCenter({lat: district_map_center[0], lng: district_map_center[1]});
       }
 
+      // se manda a llamar la información de candidatos y de casilla
       this.get("candidate", [district_key]);
       this.get("location", [current_location]);
     },
 
     // [ DON-PATO-API-CALL-SUCCESS (CANDIDATE) ]
+    // -----------------------------------------
+    //
     candidate_success : function(params, error, data){
-      this.set_candidate(data);
+      var html = "";
+      candidates_array = data;
+      candidate_container.innerHTML = "";
+
+      data.forEach(function(candidate, index, array){
+        console.log(candidate);
+        candidate._index = index;
+        html += candidate_template(candidate);
+      });
+
+      candidate_container.innerHTML = html;
     },
 
     // [ DON-PATO-API-CALL-SUCCESS (LOCATION) ]
+    // ----------------------------------------
+    //
     location_success : function(params, error, data){
       this.set_location_data(data);
     },
 
     // [ FUCK! ]
+    // ---------
+    //
     error : function(conn){
-      console.log("error", this, conn.responseText);
+      // cuando algo falla al mandar a llamar al api de don pato, esto
+      // es lo que se ejecuta
+      console.log(error);
     },
 
     //
@@ -425,78 +481,7 @@ var APP = function(){
       });
     },
 
-
-    //
-    // [ T H E   C A N D I D A T E S   F U N C T I O N S ]
-    // ---------------------------------------------------
-    //
-    set_candidate : function(candidates){
-      candidate_container.innerHTML = "";
-      var create = document.createElement.bind(document),
-          txt    = document.createTextNode.bind(document);
-
-      candidates.forEach(function(val, index, array){
-        // [0]. crea el contenedor
-        var li = create("li");
-        	li.setAttribute("class","col-xs-4 col-sm-3");
-        	div = create("div");
-        	li.appendChild(div);
-        // [1]. agrega la imagen
-        var img     	= create("img"),
-            img_el  	= create("figure");
-            img.src 	= val.foto;
-            img_el.appendChild(img);
-            //link
-			link_diputa 	= create("a"),
-			link_diputa_txt = "+ información";
-			link_diputa.innerHTML = link_diputa_txt;
-			img_el.appendChild(link_diputa);
-            div.appendChild(img_el);
-        // [2]. agrega el nombre
-        var name     = create("h2"),
-            name_src = txt(val.nombre);
-            name.appendChild(name_src); 
-            div.appendChild(name);
-        // [3]. agrega el partido
-        var parties = create("p");
-            parties_src = val.partidos.join(" + ");
-            parties.innerHTML = parties_src;
-            parties.setAttribute("class",'partidin ' + val.partidos.join(" "));
-            div.appendChild(parties);
-      /*
-         // [4]. agrega edad
-        var age = create("p"),
-            age_src = txt(val.edad ? val.edad + " años" : "¿inmortal?/no sabe/no contestó");
-            age.appendChild(age_src);
-            div.appendChild(age);
-            
-        // [5]. agrega la casa de campaña
-        var house = create("p"),
-            house_src = txt(val.casa_campana ? val.casa_campana : "indigente/no sabe/no contestó");
-            house.appendChild(house_src);
-            div.appendChild(house);*/
-            /*
-            age,
-            age_text,
-            curruculum_work,
-            curruculum_work_text,
-            curricullum_template,
-            curriculum_template_text,
-            name,
-            name_text,
-            parties,
-            sex,
-            social_a,
-            social_b,
-            social_c,
-            social_d,
-            alternate,
-            phone;
-            */
-        candidate_container.appendChild(li);
-      });
-    },
-
+    /*
     get_setup_data : function(){
       return {
       states_array : states_array,
@@ -516,6 +501,7 @@ var APP = function(){
       current_district : current_district,
       };
     }
+    */
   };
 
   //

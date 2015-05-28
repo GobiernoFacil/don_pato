@@ -2,6 +2,16 @@
 <html>
 <head>
   <title>API de don pato</title>
+
+  <!-- THE HTML TEMPLATES -->
+  <script id="template-candidate" type="text/x-handlebars-template">
+    <li class="col-xs-4 col-sm-3">
+      <div>
+        <figure><img src="{{foto}}"></img></figure>
+        <p><a data-index="{{_index}}" href="#">+ información</a></p>
+      </div>
+    </li>
+  </script>
 </head>
 <body>
 <!-- Inica la conlaboración con don pato. -->
@@ -65,6 +75,7 @@
 </div>
 <script src="https://maps.googleapis.com/maps/api/js"></script>
 <script src="js/bower_components/d3/d3.min.js"></script>
+<script src="js/bower_components/handlebars/handlebars.min.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
