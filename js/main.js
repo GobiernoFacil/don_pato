@@ -31,19 +31,20 @@ var APP = function(){
       state_selector      = document.querySelector("#district-selector-container select[name='state']"),
       city_selector       = document.querySelector("#district-selector-container select[name='city']"),
       district_map        = document.querySelector("#district-map-container .map"),
-      locations_map       = document.querySelector("#district-city-container .map"),
+      locations_map       = document.querySelector("#city-map-container .map"),
       candidate_container = document.querySelector("#district-candidates-container ul"),
       location_container  = document.querySelector("#locations-map-container"),
   
   // [ SET THE DATA CONTAINERS ]
   // crea las variables que contendrán la información de los CSV, y de los objetos 
   // que se crean dinámicamente. También los apuntadores de ubicación actuales.
-      states_array        = [],
-      cities_array        = [],
-      districts_array     = [],
-      candidates_array    = [],
-      cities_map_array    = [],
-      districts_map_array = [],
+      states_array          = [],
+      cities_array          = [],
+      districts_array       = [],
+      candidates_array      = [],
+      cities_map_array      = [],
+      districts_map_array   = [],
+      district_cities_array = [],
       google_district_map  = null,
       google_location_map  = null,
       google_geocoder      = new google.maps.Geocoder(),
@@ -54,9 +55,12 @@ var APP = function(){
       current_state        = null,
       current_city         = null,
       current_district     = null,
+      current_district_data = null,
   // [ SET THE HANDLEBARS TEMPLATES ]
       candidate_source   = document.querySelector("#template-candidate").innerHTML,
       candidate_template = Handlebars.compile(candidate_source),
+      location_source    = document.querySelector("#template-location").innerHTML,
+      location_template  = Handlebars.compile(location_source),
       app;
 
   //
@@ -177,6 +181,8 @@ var APP = function(){
       // ciudades. 
       state_selector.value = current_state;
       this.set_cities(current_state);
+      // define la ciudad actual y y las ciudades que pertenecen al distrito
+      this.set_cities_by_district(current_state, current_district);
 
       // se inicia el mapa de distrito, en caso de que no se haya iniciado ya.
       if(! google_district_map){
@@ -199,16 +205,19 @@ var APP = function(){
     // -----------------------------------------
     //
     candidate_success : function(params, error, data){
+      // prepara el string del contenido para la lista
+      // de diputados y vacía el contenedor por si las flys
       var html = "";
       candidates_array = data;
       candidate_container.innerHTML = "";
 
+      // genera el HTML para cada canidato
       data.forEach(function(candidate, index, array){
-        console.log(candidate);
         candidate._index = index;
         html += candidate_template(candidate);
       });
 
+      // pega el HTML al contenedor. Easy as pie
       candidate_container.innerHTML = html;
     },
 
@@ -216,7 +225,36 @@ var APP = function(){
     // ----------------------------------------
     //
     location_success : function(params, error, data){
-      this.set_location_data(data);
+      var first_element, html, address;
+      
+      // al parecer todas las casillas de una sección están en el
+      // mismo lugar, por lo que para obtener la dirección solo se
+      // ocupan los datos de la primera casilla
+      first_element = data[0];
+      address = first_element.nombre + ", " 
+      + first_element.direccion.calle + " " 
+      + (first_element.direccion.numero != "Sin Número" ? first_element.direccion.numero : "");
+
+      console.log(address);
+      // se comienza a generar el HTML para la sección de funcionarios de casilla
+      html = "<h3>" + address + "</h3>";
+      html += "<h4>" + first_element.referencia + "</h4>";
+
+      // se genera el HTML para cada funcionario de casilla, y se agrega a la 
+      // variable html
+      data.forEach(function(location){
+        html += "<div>";
+        location.funcionarios.forEach(function(funcionario){
+          html += location_template(funcionario);
+        });
+        html+= "</div>";
+      });
+
+      // se agrega el html al contenedor
+      location_container.innerHTML = html;
+
+      // se geolocaliza el chisme este
+      this.get_geolocation_from_google(address);
     },
 
     // [ FUCK! ]
@@ -378,10 +416,11 @@ var APP = function(){
       return map;
     },
 
-    get_cities_by_district : function(state, district){
+    set_cities_by_district : function(state, district){
       var _cities_array = districts_map_array[+state - 1][+district - 1],
           _city_list    = [],
-          _loc          = parseInt(current_location_key);
+          _loc          = parseInt(current_location_key),
+          _city, _state, _cities = [];
 
       for(var i = 0; i < _cities_array.length; i++){
     
@@ -392,12 +431,18 @@ var APP = function(){
           _city_list.push(_cities_array[i].clave_municipio_inegi);
         }
       }
-      return [
-        current_city, 
-        _city_list, 
-        _loc, 
-        city_selector.querySelector("option[value='" + (current_city) + "']")
-      ];
+      district_cities_array = _city_list;
+      _city = cities_array[+cities_map_array[current_state - 1][0] + (current_city - 1)];
+      district_cities_array.forEach(function(ct){
+        _cities.push(cities_array[+cities_map_array[current_state - 1][0] + (ct - 1)]);
+      });
+      _state = states_array[current_state];
+      current_district_data = {
+        state    : _state,
+        city     : _city,
+        cities   : _cities,
+        district : current_district
+      };
     },
 
     //
@@ -435,80 +480,33 @@ var APP = function(){
       district_map_center = [+city.lat, +city.lng];
     },
 
-    // [ GET THE DISTRICT MAP CENTER ]
-    get_district_map_center : function(){
-      return district_map_center;
-    },
-
     //
     // [ T H E   G O O G L E   L O C A T I O N S   M A P ]
     // ---------------------------------------------------
     //
 
-    initialize_locations_map : function(){
+    initialize_locations_map : function(center){
       var mapOptions = {
-        center : {
-          lat : 0,
-          lng : 0
-        },
-        zoom : 12
+        center : center,
+        zoom : 15
       };
       google_location_map = new google.maps.Map(locations_map, mapOptions);
     },
 
-    get_geolocation_from_google : function(location){
+    get_geolocation_from_google : function(address){
+      var d    = current_district_data,
+          that = this,
+      location = [address, d.city.nombre, d.state.nombre, "México"].join();
+      
       google_geocoder.geocode({address : location}, function(results, status){
-        console.log(results, status);
+        if(status == google.maps.GeocoderStatus.OK){
+          that.initialize_locations_map(results[0].geometry.location);
+        }
+        else{
+          console.log("fail fail fail");
+        }
       });
-    },
-
-    //
-    // [ T H E   G O O D   G U Y S ]
-    // ---------------------------------------------------
-    //
-    set_location_data : function(locations){
-      var container = document.createElement("div"),
-          address, c, html, loc;
-
-      locations.forEach(function(val, index, array){
-        c    = container.cloneNode(),
-        html = "";
-        loc = val.nombre + ", " + val.direccion.calle + " " + val.direccion.numero;
-        html +="<h3>" + loc + "</h3>";
-        val.funcionarios.forEach(function(v,i,a){
-          html += "<p>" + v.nombre + " " + v.apellidos + " (" + v.cargo + ")</p>";
-        });
-        c.innerHTML = html;
-        location_container.appendChild(c);
-
-        cities_array = app.get_cities_by_district(current_state, current_district);
-        address = loc + ", " + cities_array[3].innerHTML + ", " 
-                  + states_array[+current_state].nombre + ", México";
-        app.get_geolocation_from_google(address);
-      });
-    },
-
-    /*
-    get_setup_data : function(){
-      return {
-      states_array : states_array,
-      cities_array : cities_array,
-      districts_array : districts_array,
-      cities_map_array : cities_map_array,
-      districts_map_array : districts_map_array,
-      google_district_map : google_district_map,
-      google_location_map : google_location_map,
-      google_geocoder : google_geocoder,
-      district_key : district_key,
-      current_location : current_location,
-      current_location_key : current_location_key,
-      current_polygon : current_polygon,
-      current_state : current_state,
-      current_city : current_city,
-      current_district : current_district,
-      };
     }
-    */
   };
 
   //
