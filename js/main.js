@@ -184,7 +184,10 @@ var APP = function(){
       }
       // si el mapa ya tiene datos, se actualiza el mapa
       else{
-        google_district_map.setCenter({lat: district_map_center[0], lng: district_map_center[1]});
+        google_district_map.setCenter({
+          lat: district_map_center[0], 
+          lng: district_map_center[1]
+        });
       }
 
       // se manda a llamar la información de candidatos y de casilla
@@ -255,7 +258,11 @@ var APP = function(){
     set_cities : function(e){
       var state_id = typeof e === "object" ? e.currentTarget.value : e;
       var cities = app.get_cities_by_state(state_id);
-      cities.unshift({clave_entidad : 0, clave_municipio:0, nombre : "selecciona un municipio"});
+      cities.unshift({
+        clave_entidad : 0, 
+        clave_municipio:0, 
+        nombre : "selecciona un municipio"
+      });
       city_selector.innerHTML = "";
       cities.forEach(function(value, index, array){
         var option = document.createElement('option');
@@ -377,7 +384,7 @@ var APP = function(){
           _loc          = parseInt(current_location_key);
 
       for(var i = 0; i < _cities_array.length; i++){
-        console.log(_loc, _cities_array[i].inicia, _cities_array[i].termina, _cities_array[i].clave_entidad, _cities_array[i].clave_municipio, _cities_array[i].clave_municipio_inegi);
+    
         if(_loc >= +_cities_array[i].inicia && _loc <= +_cities_array[i].termina){
           current_city = _cities_array[i].clave_municipio_inegi;
         }
